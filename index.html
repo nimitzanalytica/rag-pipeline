@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DocAsk</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #181818;
+    --border: #2a2a2a;
+    --border-hover: #444;
+    --accent: #e8d5a3;
+    --accent-dim: rgba(232, 213, 163, 0.12);
+    --accent-glow: rgba(232, 213, 163, 0.06);
+    --text: #f0ede8;
+    --text-muted: #888;
+    --text-dim: #555;
+    --success: #6fcf97;
+    --error: #eb5757;
+    --radius: 12px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 64px 24px 80px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .wordmark {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.8rem;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .wordmark em {
+    font-style: italic;
+    opacity: 0.7;
+  }
+
+  .tagline {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  /* Main card */
+  .card {
+    width: 100%;
+    max-width: 640px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: fadeUp 0.6s ease 0.1s both;
+  }
+
+  /* Upload zone */
+  .upload-zone {
+    padding: 40px 36px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .upload-zone:hover,
+  .upload-zone.drag-over {
+    background: var(--accent-glow);
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+  }
+
+  .upload-icon {
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid var(--border-hover);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .upload-zone:hover .upload-icon {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .upload-label {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .upload-label strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .upload-types {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* File pill — shown after selection */
+  .file-pill {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232, 213, 163, 0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 16px;
+    pointer-events: none;
+  }
+
+  .file-pill.visible { display: flex; }
+
+  .file-pill-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-pill-size {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* Upload button */
+  .upload-btn {
+    display: block;
+    width: calc(100% - 72px);
+    margin: 20px 36px 0;
+    padding: 13px;
+    background: var(--accent);
+    color: #0f0f0f;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    display: none;
+  }
+
+  .upload-btn.visible { display: block; }
+  .upload-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .upload-btn:active { transform: translateY(0); }
+  .upload-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Ingested docs list */
+  .docs-section {
+    padding: 0 36px 28px;
+    border-bottom: 1px solid var(--border);
+    display: none;
+  }
+
+  .docs-section.visible { display: block; }
+
+  .docs-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 20px 0 10px;
+    font-weight: 500;
+  }
+
+  .doc-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .doc-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+  }
+
+  .doc-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .doc-delete {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 1rem;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .doc-delete:hover { color: var(--error); background: rgba(235,87,87,0.1); }
+
+  /* Query section */
+  .query-section {
+    padding: 28px 36px 36px;
+  }
+
+  .query-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .query-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  textarea {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    padding: 12px 14px;
+    resize: none;
+    min-height: 52px;
+    max-height: 140px;
+    transition: border-color 0.2s;
+    outline: none;
+    line-height: 1.5;
+  }
+
+  textarea::placeholder { color: var(--text-dim); }
+  textarea:focus { border-color: var(--accent); }
+
+  .ask-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s, transform 0.15s;
+    color: #0f0f0f;
+    margin-bottom: 4px;
+  }
+
+  .ask-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .ask-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* Answer area */
+  .answer-wrap {
+    margin-top: 24px;
+    display: none;
+  }
+
+  .answer-wrap.visible { display: block; }
+
+  .answer-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    font-size: 0.88rem;
+    line-height: 1.75;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .answer-meta {
+    margin-top: 10px;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 0.85rem;
+    color: var(--text);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+    opacity: 0;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  .toast.success { border-color: rgba(111, 207, 151, 0.4); color: var(--success); }
+  .toast.error { border-color: rgba(235, 87, 87, 0.4); color: var(--error); }
+
+  /* Spinner */
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(15,15,15,0.3);
+    border-top-color: #0f0f0f;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Thinking indicator */
+  .thinking {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    margin-top: 16px;
+    font-style: italic;
+  }
+
+  .thinking.visible { display: flex; }
+
+  .thinking-dots span {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: blink 1.2s infinite;
+  }
+  .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes blink {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <div class="wordmark">Doc<em>Ask</em></div>
+    <div class="tagline">Upload a document · Ask anything</div>
+  </header>
+
+  <div class="card">
+
+    <!-- Upload Zone -->
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md" />
+      <div class="upload-inner">
+        <div class="upload-icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+          </svg>
+        </div>
+        <div class="upload-label">
+          <strong>Click to upload</strong> or drag and drop
+        </div>
+        <div class="upload-types">.pdf · .docx · .txt · .md</div>
+        <div class="file-pill" id="filePill">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--accent);flex-shrink:0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+          </svg>
+          <span class="file-pill-name" id="pillName"></span>
+          <span class="file-pill-size" id="pillSize"></span>
+        </div>
+      </div>
+    </div>
+
+    <button class="upload-btn" id="uploadBtn" onclick="uploadFile()">
+      <span id="uploadBtnText">Ingest Document</span>
+      <div class="spinner" id="uploadSpinner"></div>
+    </button>
+
+    <!-- Ingested Docs -->
+    <div class="docs-section" id="docsSection">
+      <div class="docs-label">Ingested Documents</div>
+      <div id="docsList"></div>
+    </div>
+
+    <!-- Query -->
+    <div class="query-section">
+      <div class="query-label">Ask a Question</div>
+      <div class="query-wrap">
+        <textarea
+          id="questionInput"
+          placeholder="What is this document about?"
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="ask-btn" id="askBtn" onclick="askQuestion()" title="Ask">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.269 20.876L5.999 12zm0 0h7.5"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="thinking" id="thinking">
+        <div class="thinking-dots">
+          <span></span><span></span><span></span>
+        </div>
+        Thinking…
+      </div>
+
+      <div class="answer-wrap" id="answerWrap">
+        <div class="answer-box" id="answerBox"></div>
+        <div class="answer-meta" id="answerMeta"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'http://127.0.0.1:8000';
+  let selectedFile = null;
+
+  // ── File selection ──────────────────────────────────────────────────────────
+  const fileInput = document.getElementById('fileInput');
+  const uploadZone = document.getElementById('uploadZone');
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) selectFile(fileInput.files[0]);
+  });
+
+  uploadZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadZone.classList.add('drag-over');
+  });
+
+  uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('drag-over');
+  });
+
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]);
+  });
+
+  function selectFile(file) {
+    selectedFile = file;
+    document.getElementById('pillName').textContent = file.name;
+    document.getElementById('pillSize').textContent = formatBytes(file.size);
+    document.getElementById('filePill').classList.add('visible');
+    document.getElementById('uploadBtn').classList.add('visible');
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  // ── Upload ──────────────────────────────────────────────────────────────────
+  async function uploadFile() {
+    if (!selectedFile) return;
+
+    const btn = document.getElementById('uploadBtn');
+    const btnText = document.getElementById('uploadBtnText');
+    const spinner = document.getElementById('uploadSpinner');
+
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    spinner.style.display = 'block';
+
+    const form = new FormData();
+    form.append('file', selectedFile);
+
+    try {
+      const res = await fetch(`${API}/upload`, { method: 'POST', body: form });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+      showToast(`Ingested ${data.chunks_created} chunks`, 'success');
+      selectedFile = null;
+      fileInput.value = '';
+      document.getElementById('filePill').classList.remove('visible');
+      btn.classList.remove('visible');
+      await loadDocs();
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btnText.style.display = '';
+      spinner.style.display = 'none';
+    }
+  }
+
+  // ── Load docs ───────────────────────────────────────────────────────────────
+  async function loadDocs() {
+    try {
+      const res = await fetch(`${API}/documents`);
+      const docs = await res.json();
+
+      const list = document.getElementById('docsList');
+      const section = document.getElementById('docsSection');
+
+      list.innerHTML = '';
+
+      if (docs.length === 0) {
+        section.classList.remove('visible');
+        return;
+      }
+
+      section.classList.add('visible');
+      docs.forEach(doc => {
+        const el = document.createElement('div');
+        el.className = 'doc-item';
+        el.innerHTML = `
+          <div class="doc-dot"></div>
+          <div class="doc-name" title="${doc.filename}">${doc.filename}</div>
+          <button class="doc-delete" onclick="deleteDoc('${doc.doc_id}', this)" title="Remove">×</button>
+        `;
+        list.appendChild(el);
+      });
+    } catch (err) {
+      // Server may not be ready yet
+    }
+  }
+
+  // ── Delete doc ──────────────────────────────────────────────────────────────
+  async function deleteDoc(docId, btn) {
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API}/documents/${docId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      showToast('Document removed', 'success');
+      await loadDocs();
+    } catch (err) {
+      showToast(err.message, 'error');
+      btn.disabled = false;
+    }
+  }
+
+  // ── Query ───────────────────────────────────────────────────────────────────
+  async function askQuestion() {
+    const input = document.getElementById('questionInput');
+    const question = input.value.trim();
+    if (!question) return;
+
+    const askBtn = document.getElementById('askBtn');
+    const thinking = document.getElementById('thinking');
+    const answerWrap = document.getElementById('answerWrap');
+
+    askBtn.disabled = true;
+    thinking.classList.add('visible');
+    answerWrap.classList.remove('visible');
+
+    try {
+      const res = await fetch(`${API}/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.detail || 'Query failed');
+
+      document.getElementById('answerBox').textContent = data.answer;
+
+      // Build source list
+      const unique = [...new Set(data.sources.map(s => s.filename).filter(Boolean))];
+      const meta = document.getElementById('answerMeta');
+      meta.innerHTML = unique.length
+        ? `<span>Sources: ${unique.join(', ')}</span><span>${data.chunks_retrieved} chunks retrieved</span>`
+        : `<span>${data.chunks_retrieved} chunks retrieved</span>`;
+
+      answerWrap.classList.add('visible');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      askBtn.disabled = false;
+      thinking.classList.remove('visible');
+    }
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      askQuestion();
+    }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  }
+
+  let toastTimer;
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Load existing docs on page open
+  loadDocs();
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Environment
+.env
+
+# Vector store data (user-specific, not part of the repo)
+chroma_db/
+
+# Uploaded files
+uploads/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
