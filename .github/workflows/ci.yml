@@ -25,7 +25,7 @@ jobs:
 
       - name: Run flake8
         run: |
-          flake8 main.py rag.py config.py \
+          flake8 main.py rag.py config.py database.py \
             --max-line-length=120 \
             --ignore=E501,W503 \
             --statistics
