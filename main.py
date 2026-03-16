@@ -13,10 +13,12 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, status
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 import rag
+import database
 from config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -41,6 +43,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# Startup
+# ---------------------------------------------------------------------------
+
+@app.on_event("startup")
+def startup():
+    """Initialize PostgreSQL table on startup."""
+    database.init_db()
 
 
 # ---------------------------------------------------------------------------
@@ -179,6 +191,16 @@ def query(request: QueryRequest):
             detail=f"Query failed: {str(e)}",
         )
 
+    # Log query to PostgreSQL — failure never breaks the response
+    database.log_query(
+        question=request.question,
+        answer=result["answer"],
+        provider=result.get("provider", "unknown"),
+        chunks_retrieved=result["chunks_retrieved"],
+        sources=result["sources"],
+        doc_id=request.doc_id,
+    )
+
     return QueryResponse(**result)
 
 
@@ -228,3 +250,32 @@ def delete_document(doc_id: str):
         **result,
         message=f"Deleted {result['chunks_deleted']} chunks for doc_id='{doc_id}'.",
     )
+
+    
+    # 1. Create the virtual environment
+#python -m venv venv
+
+# 2. Activate it
+#venv\Scripts\activate
+
+# 3. Install dependencies
+#pip install -r requirements.txt
+
+# 4. Create your .env file
+#copy .env.example .env
+# Then open .env and add your ANTHROPIC_API_KEY
+
+# 5. Now run the server
+#uvicorn main:app --reload
+
+# Check what's in your current directory
+#Get-ChildItem
+
+# Check what's inside app/
+#Get-ChildItem app
+
+# the website to upload your document is: http://127.0.0.1:8000/docs
+
+# "clear cache"
+#Remove-Item -Recurse -Force chroma_db
+#Remove-Item -Recurse -Force uploads

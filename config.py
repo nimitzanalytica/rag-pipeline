@@ -8,7 +8,6 @@ ROOT_DIR = Path(__file__).resolve().parent
 
 class Settings(BaseSettings):
     # ── LLM Provider ──────────────────────────────────────────────────────────
-    # Set to "claude" or "ollama"
     llm_provider: Literal["claude", "ollama"] = "ollama"
 
     # Anthropic Claude (required when llm_provider=claude)
@@ -22,7 +21,6 @@ class Settings(BaseSettings):
     max_tokens: int = 1024
 
     # ── Embeddings ────────────────────────────────────────────────────────────
-    # Runs locally — no API key needed regardless of llm_provider
     embedding_model: str = "all-MiniLM-L6-v2"
 
     # ── Storage ───────────────────────────────────────────────────────────────
@@ -34,6 +32,13 @@ class Settings(BaseSettings):
     chunk_size: int = 1000
     chunk_overlap: int = 200
     retrieval_k: int = 4
+
+    # ── PostgreSQL ────────────────────────────────────────────────────────────
+    db_host: str = "localhost"
+    db_port: int = 5433
+    db_name: str = "rag_pipeline"
+    db_user: str = "postgres"
+    db_password: str = ""
 
     class Config:
         env_file = ROOT_DIR / ".env"
