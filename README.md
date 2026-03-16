@@ -2,6 +2,22 @@
 
 A **RAG (Retrieval-Augmented Generation)** API that lets you upload documents and ask natural language questions about them. Built as a portfolio project demonstrating a production-style AI pipeline.
 
+## Use Cases
+
+This API is designed for any domain where people need to query large volumes of documents with natural language. Some examples:
+
+| Domain | Example |
+|---|---|
+| 🎓 **EdTech** | Upload a course syllabus, textbook chapter, or lecture notes — students ask questions and get grounded, cited answers instantly |
+| 🎓 **EdTech** | Ingest an entire curriculum — instructors query it to find alignment between learning objectives and assessments |
+| 💊 **Healthcare** | Upload clinical guidelines — practitioners query drug protocols without reading 40-page PDFs |
+| ⚖️ **Legal** | Ingest case files or contracts — lawyers ask plain-English questions about specific clauses |
+| 🏢 **Enterprise** | Upload internal policy documents — employees self-serve answers without pinging HR |
+
+The architecture is domain-agnostic — swap the documents, keep the pipeline.
+
+---
+
 ## Stack
 
 | Layer | Technology |
@@ -66,8 +82,8 @@ Full interactive docs at `http://localhost:8000/docs` once running.
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/YOUR_USERNAME/rag-api.git
-cd rag-api
+git clone https://github.com/nimitzanalytica/rag-pipeline.git
+cd rag-pipeline
 
 # 2. Configure environment
 cp .env.example .env
@@ -89,8 +105,8 @@ Data persists in `chroma_db/` and `uploads/` across restarts.
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/YOUR_USERNAME/rag-api.git
-cd rag-api
+git clone https://github.com/nimitzanalytica/rag-pipeline.git
+cd rag-pipeline
 
 # 2. Create and activate a virtual environment
 python -m venv venv
@@ -197,7 +213,7 @@ curl -X DELETE http://localhost:8000/documents/your_document_a1b2c3d4
 ## Project Structure
 
 ```
-rag-api/
+rag-pipeline/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
