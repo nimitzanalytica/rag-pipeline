@@ -13,8 +13,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile, status
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
 import rag

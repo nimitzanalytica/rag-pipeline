@@ -13,7 +13,7 @@ LLM provider is controlled by LLM_PROVIDER in .env:
 import hashlib
 import time
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
