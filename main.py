@@ -13,14 +13,13 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile, status
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, File, HTTPException, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-import rag
 import database
+import rag
 from config import settings
-from fastapi.middleware.cors import CORSMiddleware
 
 
 # ---------------------------------------------------------------------------
@@ -61,7 +60,7 @@ def startup():
 
 class QueryRequest(BaseModel):
     question: str
-    doc_id: Optional[str] = None   # scope query to a single doc (optional)
+    doc_id: Optional[str] = None
 
     model_config = {
         "json_schema_extra": {
@@ -120,12 +119,12 @@ def root():
 )
 async def upload_document(file: UploadFile = File(...)):
     """
-    Upload a PDF, TXT, or MD file. The document will be:
+    Upload a PDF, DOCX, TXT, or MD file. The document will be:
     - Chunked into overlapping segments
     - Embedded using a local sentence-transformer model
     - Stored in ChromaDB for retrieval
 
-    Returns a `doc_id` you can use to scope queries to this document.
+    Returns a doc_id you can use to scope queries to this document.
     """
     allowed_extensions = {".pdf", ".docx", ".txt", ".md"}
     suffix = Path(file.filename).suffix.lower()
@@ -136,7 +135,6 @@ async def upload_document(file: UploadFile = File(...)):
             detail=f"Unsupported file type '{suffix}'. Accepted: {', '.join(allowed_extensions)}",
         )
 
-    # Save upload to disk temporarily
     save_path = settings.upload_dir / file.filename
     try:
         with save_path.open("wb") as f:
@@ -144,7 +142,6 @@ async def upload_document(file: UploadFile = File(...)):
     finally:
         file.file.close()
 
-    # Ingest into vector store
     try:
         result = rag.ingest_document(save_path)
     except ValueError as e:
@@ -169,10 +166,10 @@ async def upload_document(file: UploadFile = File(...)):
 )
 def query(request: QueryRequest):
     """
-    Submit a natural language question. Claude will answer using only content
-    retrieved from your ingested documents.
+    Submit a natural language question. The LLM will answer using only content
+    retrieved from your ingested documents. Every query is logged to PostgreSQL.
 
-    Optionally pass a `doc_id` to restrict the search to a single document.
+    Optionally pass a doc_id to restrict the search to a single document.
     """
     if not request.question.strip():
         raise HTTPException(
@@ -213,7 +210,7 @@ def query(request: QueryRequest):
 def list_documents():
     """
     Returns a list of all documents currently stored in the vector database,
-    with their `doc_id`, filename, and ingestion timestamp.
+    with their doc_id, filename, and ingestion timestamp.
     """
     try:
         docs = rag.list_documents()
@@ -233,7 +230,7 @@ def list_documents():
 )
 def delete_document(doc_id: str):
     """
-    Remove all chunks for the given `doc_id` from ChromaDB.
+    Remove all chunks for the given doc_id from ChromaDB.
     The document will no longer be searchable after deletion.
     """
     try:
@@ -250,32 +247,3 @@ def delete_document(doc_id: str):
         **result,
         message=f"Deleted {result['chunks_deleted']} chunks for doc_id='{doc_id}'.",
     )
-
-    
-    # 1. Create the virtual environment
-#python -m venv venv
-
-# 2. Activate it
-#venv\Scripts\activate
-
-# 3. Install dependencies
-#pip install -r requirements.txt
-
-# 4. Create your .env file
-#copy .env.example .env
-# Then open .env and add your ANTHROPIC_API_KEY
-
-# 5. Now run the server
-#uvicorn main:app --reload
-
-# Check what's in your current directory
-#Get-ChildItem
-
-# Check what's inside app/
-#Get-ChildItem app
-
-# the website to upload your document is: http://127.0.0.1:8000/docs
-
-# "clear cache"
-#Remove-Item -Recurse -Force chroma_db
-#Remove-Item -Recurse -Force uploads
